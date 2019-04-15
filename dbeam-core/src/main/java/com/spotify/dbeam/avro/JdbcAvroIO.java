@@ -139,7 +139,7 @@ public class JdbcAvroIO {
   }
 
   private static class JdbcAvroWriter extends FileBasedSink.Writer<Void, String> {
-    private final Logger logger = LoggerFactory.getLogger(JdbcAvroWriter.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(JdbcAvroWriter.class);
     private final int syncInterval = DataFileConstants.DEFAULT_SYNC_INTERVAL * 16; // 1 MB
     private final DynamicAvroDestinations<?, Void, String> dynamicDestinations;
     private final JdbcAvroArgs jdbcAvroArgs;
@@ -166,7 +166,7 @@ public class JdbcAvroIO {
     @SuppressWarnings("deprecation") // uses internal test functionality.
     @Override
     protected void prepareWrite(WritableByteChannel channel) throws Exception {
-      logger.info("jdbcavroio : Preparing write...");
+      LOGGER.debug("jdbcavroio : Preparing write...");
       connection = jdbcAvroArgs.jdbcConnectionConfiguration().createConnection();
       Void destination = getDestination();
       Schema schema = dynamicDestinations.getSchema(destination);
@@ -176,7 +176,7 @@ public class JdbcAvroIO {
       dataFileWriter.setMeta("created_by", this.getClass().getCanonicalName());
       this.countingOutputStream = new CountingOutputStream(Channels.newOutputStream(channel));
       dataFileWriter.create(schema, this.countingOutputStream);
-      logger.info("jdbcavroio : Write prepared");
+      LOGGER.debug("jdbcavroio : Write prepared");
     }
 
     private ResultSet executeQuery(String query) throws Exception {
@@ -199,7 +199,7 @@ public class JdbcAvroIO {
       }
 
       long startTime = System.nanoTime();
-      logger.info(
+      LOGGER.info(
           "jdbcavroio : Executing query with fetchSize={} (this might take a few minutes) ...",
           statement.getFetchSize());
       ResultSet resultSet = statement.executeQuery();
@@ -213,7 +213,7 @@ public class JdbcAvroIO {
     public void write(String query) throws Exception {
       checkArgument(dataFileWriter != null,
                     "Avro DataFileWriter was not properly created");
-      logger.info("jdbcavroio : Starting write...");
+      LOGGER.debug("jdbcavroio : Starting write...");
       final ExecutorService executorService = Executors.newSingleThreadExecutor();
       try (ResultSet resultSet = executeQuery(query)) {
         final Future<?> future = executorService.submit(new AvroWriter(dataFileWriter, queue));
@@ -241,14 +241,14 @@ public class JdbcAvroIO {
 
     @Override
     protected void finishWrite() throws Exception {
-      logger.info("jdbcavroio : Closing connection, flushing writer...");
+      LOGGER.debug("jdbcavroio : Closing connection, flushing writer...");
       if (connection != null) {
         connection.close();
       }
       if (dataFileWriter != null) {
         dataFileWriter.close();
       }
-      logger.info("jdbcavroio : Write finished");
+      LOGGER.info("jdbcavroio : Write finished");
     }
   }
 
