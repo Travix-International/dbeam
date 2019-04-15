@@ -51,7 +51,7 @@ public class JdbcAvroRecordConverter {
         resultSet.getMetaData().getColumnCount(),
         resultSet);
   }
-  
+
   @SuppressWarnings("unchecked")
   static JdbcAvroRecord.SqlFunction<ResultSet, Object>[] computeAllMappings(ResultSet resultSet)
       throws SQLException {
